@@ -252,9 +252,8 @@ function drawStreet(p: Ctx, camX: number) {
   ];
   for (let r = 0; r < rows.length; r++) {
     const { y, h, sw, off } = rows[r];
-    // la parallasse e piu lenta per le file lontane (in alto), piena per le vicine
-    const par = 0.55 + (r / (rows.length - 1)) * 0.45;
-    const scroll = camX * par;
+    // tutta la salizada scorre come un blocco unico: stessa velocita per ogni fila
+    const scroll = camX;
     const n = Math.ceil(W / sw) + 2;
     const firstIdx = Math.floor(scroll / sw);
     for (let s = 0; s < n; s++) {
