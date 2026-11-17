@@ -288,12 +288,20 @@ function drawWater(p: Ctx, camX: number, t: number) {
 }
 
 // ============ GONDOLIERE ============
-function drawGondolier(p: Ctx, t: number, walking: boolean) {
+function drawGondolier(p: Ctx, t: number, walking: boolean, sheet: HTMLImageElement | null) {
+  const x = HERO_X;
+  const y = 226 + (walking ? Math.round(Math.sin((t / 150) * Math.PI) * 1) : 0);
+  // se lo sprite sheet e caricato, usiamo i frame PNG (frame da 24x48)
+  if (sheet && sheet.complete && sheet.naturalWidth > 0) {
+    const fw = 24, fh = 48;
+    const nFrames = Math.max(1, Math.floor(sheet.naturalWidth / fw));
+    const frame = walking ? Math.floor(t / 120) % nFrames : 0;
+    p.drawImage(sheet, frame * fw, 0, fw, fh, x, y - 2, fw, fh);
+    return;
+  }
+  // fallback: disegno procedurale (finche lo sprite non e disponibile)
   const cycle = t / 150;
   const step = walking ? Math.floor(cycle) % 2 : 0;
-  const bob = walking ? Math.round(Math.sin(cycle * Math.PI) * 1) : 0;
-  const x = HERO_X;
-  const y = 226 + bob; // punto di camminata piu basso, verso il bordo della salizada
 
   const skin = "#d9a066", skinD = "#b07a45";
   const shirt = "#f0f0f0", shirtD = "#c9c9c9", red = "#c0392b";
@@ -381,6 +389,14 @@ export default function App() {
   const [encIdx, setEncIdx] = useState(0); // indice incontro corrente
   const [score, setScore] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // sprite sheet del gondoliere: caricata se il PNG esiste in public/sprites/
+  const sheetRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = "./sprites/gondoliere/gondolier_walking.png";
+    img.onload = () => { sheetRef.current = img; };
+  }, []);
 
   // stato del mondo mutabile, gestito dal loop
   const g = useRef({
@@ -535,7 +551,7 @@ export default function App() {
           }
         }
       } else {
-        drawGondolier(p, now, walkingNow);
+        drawGondolier(p, now, walkingNow, sheetRef.current);
       }
 
       raf = requestAnimationFrame(loop);
