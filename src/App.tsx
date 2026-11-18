@@ -54,9 +54,7 @@ const CAT: EncDef = {
     px(p, x + 15, y + 3, 1, 4, d); px(p, x + 18, y + 3, 1, 4, d);
     px(p, x + 6, y + 9, 1, 5, d); px(p, x + 9, y + 9, 1, 5, d);
     // occhi
-    px(
-
-p, x + 15, y + 5, 2, 2, "#1a3c6e"); px(p, x + 18, y + 5, 2, 2, "#1a3c6e");
+    px(p, x + 15, y + 5, 2, 2, "#1a3c6e"); px(p, x + 18, y + 5, 2, 2, "#1a3c6e");
     px(p, x + 15, y + 5, 1, 1, "#fff"); px(p, x + 18, y + 5, 1, 1, "#fff");
     // muso e baffi
     px(p, x + 16, y + 8, 3, 2, "#f5deb3"); px(p, x + 17, y + 8, 1, 1, "#c46a6a");
@@ -105,9 +103,7 @@ const FIRE: EncDef = {
     px(p, x + 3, y + 18, 18, 3, "#6b4423"); px(p, x + 5, y + 16, 14, 3, "#54341b");
     // fiamme
     px(p, x + 6, y + 8 + f1, 12, 9, "#e2542c");
-    px(p, x +
- 
-4, y + 12 + f2, 4, 5, "#e2542c"); px(p, x + 16, y + 12 + f2, 4, 5, "#e2542c");
+    px(p, x + 4, y + 12 + f2, 4, 5, "#e2542c"); px(p, x + 16, y + 12 + f2, 4, 5, "#e2542c");
     px(p, x + 8, y + 5 + f2, 8, 12, "#f2882c");
     px(p, x + 10, y + 2 + f1, 4, 10, "#ffd22c");
     px(p, x + 11, y + 12, 2, 4, "#fff2a8");
@@ -162,9 +158,7 @@ function drawGothicWindow(p: Ctx, wx: number, wy: number) {
     px(p, ax, wy + 4, 12, 22, "#3d3a4e");
     px(p, ax + 2, wy + 1, 8, 4, "#3d3a4e");
     px(p, ax + 4, wy + 1, 4, 2, "#3d3a4e");
-    p
-x(
-p, ax + 2, wy + 4, 10, 19, "#5a6a8a");
+    px(p, ax + 2, wy + 4, 10, 19, "#5a6a8a");
     px(p, ax + 4, wy + 6, 3, 8, "#7a8ab0");
     px(p, ax + 11, wy + 1, 2, 25, "#e0d5c0");
   }
@@ -216,9 +210,7 @@ function drawBuilding(p: Ctx, i: number, bx: number) {
   px(p, bx + rw - 19, top - 22, 9, 3, "#8d4a35");
   px(p, bx + rw - 18, top - 10, 7, 2, shade("#7a3b2a", 0.7));
 
-  // porta d'ingresso con arco, d
-ivi
-sione ante e gradino
+  // porta d'ingresso con arco, divisione ante e gradino
   const dx = bx + (BUILDING_W - 4) / 2 - 9;
   const dy = bottom - 34;
   px(p, dx - 2, dy - 2, 22, 36, "#d9cfb8");
@@ -268,9 +260,7 @@ function drawStreet(p: Ctx, camX: number) {
       const i = firstIdx + s;
       const sx = i * sw + off - scroll;
       if (sx > W) break;
-      // pietra con v
-aria
-zione di tono
+      // pietra con variazione di tono
       const tone = ((i + r * 3) % 3);
       const c = tone === 0 ? "#7d7974" : tone === 1 ? "#86827c" : "#75716d";
       px(p, sx + 1, y, sw - 2, h - 1, c);
@@ -318,9 +308,7 @@ function drawGondolier(p: Ctx, t: number, walking: boolean, sheet: HTMLImageElem
   const pant = "#3a3f52", hat = "#e8e4da", hatD = "#c2bcae";
 
   if (step === 0) {
-    px(p, x + 9, y + 30, 3,
- 9, p
-ant); px(p, x + 8, y + 39, 5, 3, "#222");
+    px(p, x + 9, y + 30, 3, 9, pant); px(p, x + 8, y + 39, 5, 3, "#222");
   } else {
     px(p, x + 11, y + 30, 3, 7, pant); px(p, x + 13, y + 37, 5, 3, "#222");
   }
@@ -378,9 +366,7 @@ function drawGondolierFalling(p: Ctx, y: number, t: number) {
   px(p, x + 18, y + 6, 3, 11, shirt); px(p, x + 18, y + 2, 3, 5, skin);
 
   // testa
-  px(p, x + 
-8, y +
- 5, 9, 11, skin);
+  px(p, x + 8, y + 5, 9, 11, skin);
   px(p, x + 8, y + 5, 9, 2, skinD);
   px(p, x + 8, y + 9, 2, 2, "#fff"); px(p, x + 8, y + 9, 1, 1, "#222"); // occhio sbarato
   px(p, x + 12, y + 9, 2, 2, "#fff"); px(p, x + 13, y + 9, 1, 1, "#222");
@@ -430,9 +416,7 @@ export default function App() {
     }
     return a;
   };
-  const [seq, setSeq] = useSt
-ate
-<EncDef[]>(() => shuffle(ENCOUNTERS));
+  const [seq, setSeq] = useState<EncDef[]>(() => shuffle(ENCOUNTERS));
   const encAt = (i: number) => seq[((i % seq.length) + seq.length) % seq.length];
   const encWorldPos = (i: number) => 300 + i * ENC_SPACING;
 
@@ -495,9 +479,7 @@ ate
 
       // FERMATA: quando l'oggetto arriva a STOP_DISTANCE davanti al gondoliere
       if (phase === "walking" && encScreenX <= HERO_X + STOP_DISTANCE) {
-        camX = encX - HERO_X - STOP_DISTANCE; // allinea l'oggetto davanti al gondoli
-er
-e
+        camX = encX - HERO_X - STOP_DISTANCE; // allinea l'oggetto davanti al gondoliere
         stoppedCam = true;
         setPhase("stopped");
       }
@@ -553,9 +535,7 @@ e
         }
       }
 
-      // gondoliere
-:
- cammina solo in "walking"; braccia alzate durante la caduta
+      // gondoliere: cammina solo in "walking"; braccia alzate durante la caduta
       const walkingNow = phase === "walking";
       const falling = (phase === "falling" || phase === "gameover") && heroVisible;
       if (falling) {
@@ -604,9 +584,7 @@ e
         {phase === "title" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-black/45" style={{ borderRadius: 8 }}>
             <div className="text-center">
-              <div className="text-[#ffd22c] text-3xl font-blac
-
-k tracking-wide" style={{ fontFamily: "monospace" }}>
+              <div className="text-[#ffd22c] text-3xl font-black tracking-wide" style={{ fontFamily: "monospace" }}>
                 SPASSIZADA A VENEZIA
               </div>
               <div className="text-white/80 text-[11px] mt-2 tracking-[0.3em]" style={{ fontFamily: "monospace" }}>
@@ -650,9 +628,7 @@ k tracking-wide" style={{ fontFamily: "monospace" }}>
               style={{ borderColor: "#3a3226", borderRadius: 4, boxShadow: "4px 4px 0 #3a3226" }}
             >
               <div className="text-[10px] text-[#8a6d3b] tracking-widest mb-1" style={{ fontFamily: "monospace" }}>
-                CO
-
-SSA XELO QUESTO?
+                COSSA XELO QUESTO?
               </div>
               <div className="text-sm text-[#2c2620] mb-2" style={{ fontFamily: "monospace" }}>
                 {currentEnc.hint}
@@ -698,9 +674,7 @@ SSA XELO QUESTO?
           </div>
         )}
 
-        {/* GAME OVER 
-*
-/}
+        {/* GAME OVER */}
         {phase === "gameover" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0d2035]/85" style={{ borderRadius: 8 }}>
             <div className="text-[#9fd4f0] text-3xl font-black" style={{ fontFamily: "monospace" }}>SPLASH!</div>
