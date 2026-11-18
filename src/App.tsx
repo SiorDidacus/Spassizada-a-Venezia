@@ -290,12 +290,13 @@ function drawWater(p: Ctx, camX: number, t: number) {
 // ============ GONDOLIERE ============
 function drawGondolier(p: Ctx, t: number, walking: boolean, sheet: HTMLImageElement | null) {
   const x = HERO_X;
-  const y = 226 + (walking ? Math.round(Math.sin((t / 150) * Math.PI) * 1) : 0);
+  // niente bob procedurale: il movimento verticale e gia nei frame dello sprite
+  const y = 226;
   // se lo sprite sheet e caricato, usiamo i frame PNG (frame da 24x48)
   if (sheet && sheet.complete && sheet.naturalWidth > 0) {
     const fw = 24, fh = 48;
     const nFrames = Math.max(1, Math.floor(sheet.naturalWidth / fw));
-    const frame = walking ? Math.floor(t / 120) % nFrames : 0;
+    const frame = walking ? Math.floor(t / 150) % nFrames : 0;
     p.drawImage(sheet, frame * fw, 0, fw, fh, x, y - 2, fw, fh);
     return;
   }
