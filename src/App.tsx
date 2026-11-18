@@ -8,6 +8,7 @@ const WATER_TOP = 320;
 const STREET_TOP = 252;
 const WALK_SPEED = 30;
 const STOP_DISTANCE = 34; // distanza a cui si ferma davanti all'oggetto
+const SKY_PARALLAX = 0.25; // il cielo scorre piu lentamente degli altri livelli
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -136,10 +137,22 @@ const ENCOUNTERS: EncDef[] = [CAT, SEAGULL, CHAIR, FIRE, LANTERN];
 const ENC_SPACING = 260; // distanza nel mondo tra un incontro e il prossimo
 
 // ============ CIELO ============
-function drawSky(p: Ctx) {
+// gradiente di base: fallback finche il tile seamless non e caricato,
+// e riempimento sotto il tile (fra i palazzi)
+function drawSky(p: Ctx, camX: number, tile: HTMLImageElement | null) {
   px(p, 0, 0, W, 60, "#7ec4e8");
   px(p, 0, 60, W, 40, "#93d0ef");
   px(p, 0, 100, W, 30, "#a9dcf5");
+  // tile seamless che scorre (se caricato): parallasse lenta
+  if (tile && tile.complete && tile.naturalWidth > 0) {
+    const tw = tile.naturalWidth;
+    const th = tile.naturalHeight;
+    const off = ((camX * SKY_PARALLAX) % tw + tw) % tw;
+    for (let x = -off; x < W; x += tw) {
+      p.drawImage(tile, Math.round(x), 0, tw, th);
+    }
+  }
+  // sole: fisso, fuori dal tile (cosi non si ripete)
   px(p, 170, 20, 14, 14, "#fff3b0");
   px(p, 172, 18, 10, 18, "#fff3b0");
   px(p, 168, 22, 18, 10, "#fff3b0");
@@ -399,6 +412,14 @@ export default function App() {
     img.onload = () => { sheetRef.current = img; };
   }, []);
 
+  // tile del cielo: caricato se il PNG esiste in public/sprites/
+  const skyRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = "./sprites/scena/sky_tile.png";
+    img.onload = () => { skyRef.current = img; };
+  }, []);
+
   // stato del mondo mutabile, gestito dal loop
   const g = useRef({
     camX: 100,                       // posizione mondo della camera
@@ -521,7 +542,7 @@ export default function App() {
       g.current.camX = camX;
       p.imageSmoothingEnabled = false;
 
-      drawSky(p);
+      drawSky(p, camX, skyRef.current);
       drawBuildings(p, camX);
       drawStreet(p, camX);
       drawWater(p, camX, now);
