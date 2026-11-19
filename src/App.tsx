@@ -156,14 +156,14 @@ function drawSky(p: Ctx, camX: number, tile: HTMLImageElement | null, clouds: HT
   if (tile && tile.complete && tile.naturalWidth > 0) {
     parallax(tile, SKY_PARALLAX);
   }
-  // layer nuvole: sopra il cielo, sotto il sole (se caricato)
-  if (clouds && clouds.complete && clouds.naturalWidth > 0) {
-    parallax(clouds, CLOUD_PARALLAX);
-  }
   // sole: fisso, fuori dal tile (cosi non si ripete)
   px(p, 170, 20, 14, 14, "#fff3b0");
   px(p, 172, 18, 10, 18, "#fff3b0");
   px(p, 168, 22, 18, 10, "#fff3b0");
+  // layer nuvole: sopra il cielo e il sole, sotto i palazzi (se caricato)
+  if (clouds && clouds.complete && clouds.naturalWidth > 0) {
+    parallax(clouds, CLOUD_PARALLAX);
+  }
 }
 
 // ============ PALAZZI ============
