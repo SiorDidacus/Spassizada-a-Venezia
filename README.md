@@ -5,6 +5,16 @@ cammina lungo una salizada veneziana e, a ogni incontro (gato, cocal, carega,
 fogo, feral), occorre scrivere il nome dell'oggetto in veneto. Risposta giusta:
 si riparte. Sbagliata: splash in acqua!
 
+## Modalità
+
+- **normale** — la vignetta mostra l'indizio e occorre scrivere il nome
+  dell'oggetto in veneto.
+- **esperto** — "le parole no le gavarà indreture": la vignetta non mostra la
+  frase d'indizio, solo l'oggetto disegnato.
+- **esplora** — "le parole le te vien mostrà direttamente, senza competizion":
+  la vignetta mostra subito il nome dell'oggetto con il suo indizio e un
+  bottone "Va vanti" riprende la camminata. Nessun punteggio, nessuno splash.
+
 ## Sviluppo
 
     npm install

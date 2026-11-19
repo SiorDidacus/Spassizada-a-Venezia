@@ -395,10 +395,18 @@ function drawGondolierFalling(p: Ctx, y: number, t: number) {
 
 // ============ COMPONENTE ============
 type Phase = "title" | "walking" | "stopped" | "correct" | "wrong" | "falling" | "gameover";
+type Mode = "normale" | "esperto" | "esplora";
+
+const MODES: { id: Mode; label: string; desc: string }[] = [
+  { id: "normale", label: "NORMALE", desc: "Scrivi el nome de l'oggeto: se sbagio, splash!" },
+  { id: "esperto", label: "ESPERTO", desc: "Le parole no le gavara indreture." },
+  { id: "esplora", label: "ESPLORA", desc: "Le parole le te vien mostra diretamente, senza competizion." },
+];
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<Phase>("title");
+  const [mode, setMode] = useState<Mode>("normale");
   const [input, setInput] = useState("");
   const [encIdx, setEncIdx] = useState(0); // indice incontro corrente
   const [score, setScore] = useState(0);
@@ -449,13 +457,36 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (phase === "stopped") {
+    if (phase === "stopped" && mode !== "esplora") {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [phase]);
+  }, [phase, mode]);
+
+  const resetWorld = () => {
+    g.current.camX = 100;
+    g.current.enc = 0;
+    g.current.fallT = 0;
+    g.current.splash = 0;
+    setSeq(shuffle(ENCOUNTERS));
+    setEncIdx(0); setScore(0); setInput("");
+  };
+
+  const startGame = (m: Mode) => {
+    resetWorld();
+    setMode(m);
+    setPhase("walking");
+  };
+
+  // esplora: il giocatore ha visto la parola, riparte senza sfida
+  const vaVanti = () => {
+    if (phase !== "stopped" || mode !== "esplora") return;
+    g.current.enc += 1;
+    setEncIdx((i) => i + 1);
+    setPhase("walking");
+  };
 
   const submit = () => {
-    if (phase !== "stopped") return;
+    if (phase !== "stopped" || mode === "esplora") return;
     const enc = encAt(g.current.enc);
     const ok = input.trim().toLowerCase() === enc.word;
     setPhase(ok ? "correct" : "wrong");
@@ -602,9 +633,9 @@ export default function App() {
           }}
         />
 
-        {/* SCHERMATA INIZIALE */}
+        {/* SCHERMATA INIZIALE: scelta della modalita */}
         {phase === "title" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-black/45" style={{ borderRadius: 8 }}>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/45 px-4" style={{ borderRadius: 8 }}>
             <div className="text-center">
               <div className="text-[#ffd22c] text-3xl font-black tracking-wide" style={{ fontFamily: "monospace" }}>
                 SPASSIZADA A VENEZIA
@@ -613,28 +644,28 @@ export default function App() {
                 IMPARA EL VENETO
               </div>
             </div>
-            <button
-              onClick={() => {
-                g.current.camX = 100;
-                g.current.enc = 0;
-                g.current.fallT = 0;
-                g.current.splash = 0;
-                setSeq(shuffle(ENCOUNTERS));
-                setEncIdx(0); setScore(0); setInput("");
-                setPhase("walking");
-              }}
-              className="px-8 py-3 bg-[#c0392b] text-white text-base font-bold tracking-widest hover:bg-[#e74c3c] transition-colors"
-              style={{ fontFamily: "monospace", border: "3px solid #ffd22c", boxShadow: "4px 4px 0 #7a1f14" }}
-            >
-              SCOMINZIA
-            </button>
+            {MODES.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => startGame(m.id)}
+                className="w-full text-left px-4 py-2 bg-[#c0392b] hover:bg-[#e74c3c] transition-colors"
+                style={{ fontFamily: "monospace", border: "3px solid #ffd22c", boxShadow: "4px 4px 0 #7a1f14" }}
+              >
+                <div className="text-white text-base font-bold tracking-widest">{m.label}</div>
+                <div className="text-white/80 text-[10px] mt-0.5 leading-snug">{m.desc}</div>
+              </button>
+            ))}
           </div>
         )}
 
         {/* HUD */}
         {(phase === "walking" || phase === "stopped") && (
           <div className="absolute top-2 left-2 right-2 flex justify-between text-[11px] font-bold">
-            <span className="bg-black/50 text-[#ffd22c] px-2 py-1" style={{ fontFamily: "monospace" }}>PUNTI {score}</span>
+            {mode === "esplora" ? (
+              <span className="bg-black/50 text-[#9fd4f0] px-2 py-1" style={{ fontFamily: "monospace" }}>ESPLORA</span>
+            ) : (
+              <span className="bg-black/50 text-[#ffd22c] px-2 py-1" style={{ fontFamily: "monospace" }}>PUNTI {score}</span>
+            )}
             <span className="bg-black/50 text-white/80 px-2 py-1" style={{ fontFamily: "monospace" }}>INCONTRI {encIdx + 1}</span>
           </div>
         )}
@@ -650,29 +681,51 @@ export default function App() {
               style={{ borderColor: "#3a3226", borderRadius: 4, boxShadow: "4px 4px 0 #3a3226" }}
             >
               <div className="text-[10px] text-[#8a6d3b] tracking-widest mb-1" style={{ fontFamily: "monospace" }}>
-                COSSA XELO QUESTO?
+                {mode === "esplora" ? "GHE ET CATA:" : "COSSA XELO QUESTO?"}
               </div>
-              <div className="text-sm text-[#2c2620] mb-2" style={{ fontFamily: "monospace" }}>
-                {currentEnc.hint}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
-                  placeholder="scrivi in veneto..."
-                  className="flex-1 min-w-0 px-2 py-1.5 text-sm bg-white border-2 border-[#3a3226] outline-none"
-                  style={{ fontFamily: "monospace" }}
-                />
-                <button
-                  onClick={submit}
-                  className="px-3 py-1.5 bg-[#3d7a4f] text-white text-xs font-bold border-2 border-[#3a3226]"
-                  style={{ fontFamily: "monospace" }}
-                >
-                  AVANTI
-                </button>
-              </div>
+              {mode === "esplora" ? (
+                <>
+                  <div className="text-base font-black text-[#2c2620] mb-1" style={{ fontFamily: "monospace" }}>
+                    {currentEnc.word.toUpperCase()}
+                  </div>
+                  <div className="text-sm text-[#2c2620] mb-3" style={{ fontFamily: "monospace" }}>
+                    {currentEnc.hint}
+                  </div>
+                  <button
+                    onClick={vaVanti}
+                    className="px-4 py-1.5 bg-[#3d7a4f] text-white text-xs font-bold border-2 border-[#3a3226]"
+                    style={{ fontFamily: "monospace" }}
+                  >
+                    VA VANTI
+                  </button>
+                </>
+              ) : (
+                <>
+                  {mode === "normale" && (
+                    <div className="text-sm text-[#2c2620] mb-2" style={{ fontFamily: "monospace" }}>
+                      {currentEnc.hint}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+                      placeholder="scrivi in veneto..."
+                      className="flex-1 min-w-0 px-2 py-1.5 text-sm bg-white border-2 border-[#3a3226] outline-none"
+                      style={{ fontFamily: "monospace" }}
+                    />
+                    <button
+                      onClick={submit}
+                      className="px-3 py-1.5 bg-[#3d7a4f] text-white text-xs font-bold border-2 border-[#3a3226]"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      AVANTI
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -706,12 +759,7 @@ export default function App() {
             </div>
             <button
               onClick={() => {
-                g.current.camX = 100;
-                g.current.enc = 0;
-                g.current.fallT = 0;
-                g.current.splash = 0;
-                setSeq(shuffle(ENCOUNTERS));
-                setEncIdx(0); setScore(0); setInput("");
+                resetWorld();
                 setPhase("walking");
               }}
               className="mt-2 px-6 py-2 bg-[#c0392b] text-white text-sm font-bold tracking-wider hover:bg-[#e74c3c]"
@@ -725,12 +773,7 @@ export default function App() {
 
       <button
         onClick={() => {
-          g.current.camX = 100;
-          g.current.enc = 0;
-          g.current.fallT = 0;
-          g.current.splash = 0;
-          setSeq(shuffle(ENCOUNTERS));
-          setEncIdx(0); setScore(0); setInput("");
+          resetWorld();
           setPhase("title");
         }}
         className="px-4 py-1.5 bg-[#3a3226] text-white/70 text-[11px] font-bold tracking-wider hover:bg-[#52483a]"
