@@ -9,6 +9,7 @@ const STREET_TOP = 252;
 const WALK_SPEED = 30;
 const STOP_DISTANCE = 34; // distanza a cui si ferma davanti all'oggetto
 const SKY_PARALLAX = 0.25; // il cielo scorre piu lentamente degli altri livelli
+const CLOUD_PARALLAX = 0.4; // le nuvole scorrono piu in fretta del cielo, meno dei palazzi
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -139,23 +140,30 @@ const ENC_SPACING = 260; // distanza nel mondo tra un incontro e il prossimo
 // ============ CIELO ============
 // gradiente di base: fallback finche il tile seamless non e caricato,
 // e riempimento sotto il tile (fra i palazzi)
-function drawSky(p: Ctx, camX: number, tile: HTMLImageElement | null) {
+function drawSky(p: Ctx, camX: number, tile: HTMLImageElement | null, clouds: HTMLImageElement | null) {
   px(p, 0, 0, W, 60, "#7ec4e8");
   px(p, 0, 60, W, 40, "#93d0ef");
   px(p, 0, 100, W, 30, "#a9dcf5");
+  const parallax = (img: HTMLImageElement, f: number) => {
+    const iw = img.naturalWidth;
+    const ih = img.naturalHeight;
+    const off = ((camX * f) % iw + iw) % iw;
+    for (let x = -off; x < W; x += iw) {
+      p.drawImage(img, Math.round(x), 0, iw, ih);
+    }
+  };
   // tile seamless che scorre (se caricato): parallasse lenta
   if (tile && tile.complete && tile.naturalWidth > 0) {
-    const tw = tile.naturalWidth;
-    const th = tile.naturalHeight;
-    const off = ((camX * SKY_PARALLAX) % tw + tw) % tw;
-    for (let x = -off; x < W; x += tw) {
-      p.drawImage(tile, Math.round(x), 0, tw, th);
-    }
+    parallax(tile, SKY_PARALLAX);
   }
   // sole: fisso, fuori dal tile (cosi non si ripete)
   px(p, 170, 20, 14, 14, "#fff3b0");
   px(p, 172, 18, 10, 18, "#fff3b0");
   px(p, 168, 22, 18, 10, "#fff3b0");
+  // layer nuvole: sopra il cielo e il sole, sotto i palazzi (se caricato)
+  if (clouds && clouds.complete && clouds.naturalWidth > 0) {
+    parallax(clouds, CLOUD_PARALLAX);
+  }
 }
 
 // ============ PALAZZI ============
@@ -428,6 +436,14 @@ export default function App() {
     img.onload = () => { skyRef.current = img; };
   }, []);
 
+  // layer nuvole: caricato se il PNG esiste in public/sprites/
+  const cloudsRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = "./sprites/scena/clouds_tile.png";
+    img.onload = () => { cloudsRef.current = img; };
+  }, []);
+
   // stato del mondo mutabile, gestito dal loop
   const g = useRef({
     camX: 100,                       // posizione mondo della camera
@@ -573,7 +589,7 @@ export default function App() {
       g.current.camX = camX;
       p.imageSmoothingEnabled = false;
 
-      drawSky(p, camX, skyRef.current);
+      drawSky(p, camX, skyRef.current, cloudsRef.current);
       drawBuildings(p, camX);
       drawStreet(p, camX);
       drawWater(p, camX, now);
