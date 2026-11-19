@@ -6,10 +6,10 @@ const H = 384;
 const HERO_X = 70;
 const WATER_TOP = 320;
 const STREET_TOP = 252;
-const WALK_SPEED = 25;
+const WALK_SPEED = 30;
 const STOP_DISTANCE = 34; // distanza a cui si ferma davanti all'oggetto
-const SKY_PARALLAX = 0.25; // il cielo scorre piu lentamente degli altri livelli
-const CLOUD_PARALLAX = 0.4; // le nuvole scorrono piu in fretta del cielo, meno dei palazzi
+const SKY_PARALLAX = 0.15; // il cielo scorre piu lentamente degli altri livelli
+const CLOUD_PARALLAX = 0.25; // le nuvole scorrono piu in fretta del cielo, meno dei palazzi
 
 type Ctx = CanvasRenderingContext2D;
 
