@@ -398,7 +398,7 @@ type Phase = "title" | "walking" | "stopped" | "correct" | "wrong" | "falling" |
 type Mode = "normale" | "esperto" | "esplora";
 
 const MODES: { id: Mode; label: string; desc: string }[] = [
-  { id: "normale", label: "NORMALE", desc: "Scrivi el nome de l'oggeto: se sbagio, splash!" },
+  { id: "normale", label: "NORMALE", desc: "Scrivi el nome dei ogeti che te cati par la strada." },
   { id: "esperto", label: "ESPERTO", desc: "Le parole no le gavara indreture." },
   { id: "esplora", label: "ESPLORA", desc: "Le parole le te vien mostra diretamente, senza competizion." },
 ];
@@ -681,7 +681,7 @@ export default function App() {
               style={{ borderColor: "#3a3226", borderRadius: 4, boxShadow: "4px 4px 0 #3a3226" }}
             >
               <div className="text-[10px] text-[#8a6d3b] tracking-widest mb-1" style={{ fontFamily: "monospace" }}>
-                {mode === "esplora" ? "GHE ET CATA:" : "COSSA XELO QUESTO?"}
+                {mode === "esplora" ? "TI GA CATA:" : "COSSA XELO QUESTO?"}
               </div>
               {mode === "esplora" ? (
                 <>
@@ -760,12 +760,12 @@ export default function App() {
             <button
               onClick={() => {
                 resetWorld();
-                setPhase("walking");
+                setPhase("title");
               }}
               className="mt-2 px-6 py-2 bg-[#c0392b] text-white text-sm font-bold tracking-wider hover:bg-[#e74c3c]"
               style={{ fontFamily: "monospace", border: "2px solid #ffd22c" }}
             >
-              RIPROVA
+              TENTA DANOVO
             </button>
           </div>
         )}
