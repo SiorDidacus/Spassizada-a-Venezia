@@ -637,7 +637,7 @@ export default function App() {
         {phase === "title" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/45 px-4" style={{ borderRadius: 8 }}>
             <div className="text-center">
-              <div className="text-[#ffd22c] text-3xl font-black tracking-wide" style={{ fontFamily: "monospace" }}>
+              <div className="text-[#ffd22c] text-3xl font-black tracking-wide" style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}>
                 SPASSIZADA A VENEZIA
               </div>
               <div className="text-white/80 text-[11px] mt-2 tracking-[0.3em]" style={{ fontFamily: "monospace" }}>
@@ -681,7 +681,7 @@ export default function App() {
               style={{ borderColor: "#3a3226", borderRadius: 4, boxShadow: "4px 4px 0 #3a3226" }}
             >
               <div className="text-[10px] text-[#8a6d3b] tracking-widest mb-1" style={{ fontFamily: "monospace" }}>
-                {mode === "esplora" ? "TI GA CATA:" : "COSSA XELO QUESTO?"}
+                {mode === "esplora" ? "TI GA CATÀ:" : "COSSA XELO QUESTO?"}
               </div>
               {mode === "esplora" ? (
                 <>
