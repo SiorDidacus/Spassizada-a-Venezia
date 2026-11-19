@@ -10,6 +10,9 @@ const WALK_SPEED = 30;
 const STOP_DISTANCE = 34; // distanza a cui si ferma davanti all'oggetto
 const SKY_PARALLAX = 0.15; // il cielo scorre piu lentamente degli altri livelli
 const CLOUD_PARALLAX = 0.25; // le nuvole scorrono piu in fretta del cielo, meno dei palazzi
+const BUILDING_OVERLAP = 8; // incrocio totale tra palazzi consecutivi
+const BUILDING_SIDE_MARGIN = 4; // margine laterale per lato che invade il corpo del vicino
+const BUILDING_BOTTOM_MARGIN = 2; // ultime righe dello sprite che coprono la cima della salizada
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -167,6 +170,13 @@ function drawSky(p: Ctx, camX: number, tile: HTMLImageElement | null, clouds: HT
 }
 
 // ============ PALAZZI ============
+// sistema elastico: ogni PNG dentro public/sprites/palazzi/ viene rilevato
+// automaticamente alla build e usato nel mondo, con dimensioni libere
+const BUILDING_URLS = import.meta.glob<string>("../public/sprites/palazzi/*.png", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
 const FACADES = ["#c7645c", "#b78452", "#8d9a6b", "#a3785f", "#7f8ba8", "#c99a6a"];
 const BUILDING_W = 90;
 const SKYLINE = [90, 74, 100, 82];
@@ -252,6 +262,52 @@ function drawBuildings(p: Ctx, camX: number) {
     const bx = i * spacing - camX;
     drawBuilding(p, i, bx);
   }
+}
+
+type BuildingWorld = { items: { img: HTMLImageElement; x: number }[]; nextX: number; lastIdx: number };
+
+// palazzi elastici: prende a caso i PNG rilevati in public/sprites/palazzi/, uno dopo l'altro
+// attacco a incrocio: il successivo entra di BUILDING_OVERLAP px e vince nella fascia A,
+// mentre il margine destro del precedente (ridisegnato sopra tutto) vince nella fascia B
+// ritorna true se ha disegnato con gli sprite, false se serve il fallback procedurale
+function drawBuildingsElastic(p: Ctx, camX: number, imgs: HTMLImageElement[], world: BuildingWorld): boolean {
+  const ready = imgs.filter((im) => im.complete && im.naturalWidth > 0);
+  if (ready.length === 0) return false;
+
+  // genera tutti i palazzi necessari a coprire lo schermo e un po' oltre
+  while (world.nextX < camX + W + 80) {
+    let idx = Math.floor(Math.random() * ready.length);
+    if (ready.length > 1 && idx === world.lastIdx) idx = (idx + 1) % ready.length;
+    world.lastIdx = idx;
+    const img = ready[idx];
+    world.items.push({ img, x: world.nextX });
+    world.nextX += img.naturalWidth - BUILDING_OVERLAP;
+  }
+  // scarta a monte i palazzi ormai fuori schermo
+  while (world.items.length && world.items[0].x + world.items[0].img.naturalWidth < camX - 80) {
+    world.items.shift();
+  }
+
+  // primo passaggio: tutti i palazzi interi (il successivo copre il precedente nella fascia A)
+  const visible: { sx: number; img: HTMLImageElement }[] = [];
+  for (const it of world.items) {
+    const sx = Math.round(it.x - camX);
+    const w = it.img.naturalWidth;
+    if (sx < W && sx + w > 0) {
+      p.drawImage(it.img, sx, STREET_TOP + BUILDING_BOTTOM_MARGIN - it.img.naturalHeight, w, it.img.naturalHeight);
+      visible.push({ sx, img: it.img });
+    }
+  }
+  // secondo passaggio: le strisce di margine destro ridisegnate sopra tutto, cosicche
+  // gli elementi del margine del precedente sporgono sul successivo (fascia B)
+  const m = BUILDING_SIDE_MARGIN;
+  for (const v of visible) {
+    const w = v.img.naturalWidth;
+    const h = v.img.naturalHeight;
+    const yTop = STREET_TOP + BUILDING_BOTTOM_MARGIN - h;
+    p.drawImage(v.img, w - m, 0, m, h, v.sx + w - m, yTop, m, h);
+  }
+  return true;
 }
 
 // ============ SALIZADA (con leggera prospettiva) ============
@@ -444,6 +500,16 @@ export default function App() {
     img.onload = () => { cloudsRef.current = img; };
   }, []);
 
+  // sprites dei palazzi: uno HTMLImageElement per ogni PNG rilevato
+  const buildingsImgsRef = useRef<HTMLImageElement[]>([]);
+  useEffect(() => {
+    buildingsImgsRef.current = Object.values(BUILDING_URLS).map((url) => {
+      const img = new Image();
+      img.src = url;
+      return img;
+    });
+  }, []);
+
   // stato del mondo mutabile, gestito dal loop
   const g = useRef({
     camX: 100,                       // posizione mondo della camera
@@ -451,7 +517,16 @@ export default function App() {
     enc: 0,                          // indice incontro corrente (sincronizzato con encIdx)
     fallT: 0,                        // timer della caduta in acqua
     splash: 0,                       // timer dello splash
+    buildings: {
+      items: [] as { img: HTMLImageElement; x: number }[],
+      nextX: 0,
+      lastIdx: -1,
+    },
   });
+
+  const resetBuildings = () => {
+    g.current.buildings = { items: [], nextX: 0, lastIdx: -1 };
+  };
 
   // sequenza incontri: ordine casuale, poi ripetuta a rotazione
   const shuffle = (arr: EncDef[]) => {
@@ -483,6 +558,7 @@ export default function App() {
     g.current.enc = 0;
     g.current.fallT = 0;
     g.current.splash = 0;
+    resetBuildings();
     setSeq(shuffle(ENCOUNTERS));
     setEncIdx(0); setScore(0); setInput("");
   };
@@ -590,8 +666,12 @@ export default function App() {
       p.imageSmoothingEnabled = false;
 
       drawSky(p, camX, skyRef.current, cloudsRef.current);
-      drawBuildings(p, camX);
+      // prima la strada (sotto), poi i palazzi: le ultime 2 righe dello sprite
+      // coprono la cima della salizada, senza fessure
       drawStreet(p, camX);
+      if (!drawBuildingsElastic(p, camX, buildingsImgsRef.current, g.current.buildings)) {
+        drawBuildings(p, camX);
+      }
       drawWater(p, camX, now);
 
       // oggetti: quello corrente e quello appena superato (che arretra ed esce di scena)
