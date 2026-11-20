@@ -471,6 +471,7 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [phase, setPhase] = useState<Phase>("title");
   const [mode, setMode] = useState<Mode>("normale");
+  const [paused, setPaused] = useState(false);
   const [input, setInput] = useState("");
   const [encIdx, setEncIdx] = useState(0); // indice incontro corrente
   const [score, setScore] = useState(0);
@@ -548,10 +549,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (phase === "stopped" && mode !== "esplora") {
+    if (phase === "stopped" && mode !== "esplora" && !paused) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [phase, mode]);
+  }, [phase, mode, paused]);
 
   const resetWorld = () => {
     g.current.camX = 100;
@@ -623,19 +624,20 @@ export default function App() {
       const encScreenX = encX - camX;
 
       // FERMATA: quando l'oggetto arriva a STOP_DISTANCE davanti al gondoliere
-      if (phase === "walking" && encScreenX <= HERO_X + STOP_DISTANCE) {
+      // (con pausa attiva tutto e congelato: camera e fisica non avanzano)
+      if (phase === "walking" && !paused && encScreenX <= HERO_X + STOP_DISTANCE) {
         camX = encX - HERO_X - STOP_DISTANCE; // allinea l'oggetto davanti al gondoliere
         stoppedCam = true;
         setPhase("stopped");
       }
 
-      if (phase === "walking" && !stoppedCam) camX += WALK_SPEED * dt;
+      if (phase === "walking" && !paused && !stoppedCam) camX += WALK_SPEED * dt;
 
       // CADUTA: un solo salto, poi caduta con gravita fino a scomparire sott'acqua
       let fallOffset = 0;
       let splashT = 0;
       let heroVisible = true;
-      if (phase === "falling" || phase === "gameover") {
+      if ((phase === "falling" || phase === "gameover") && !paused) {
         g.current.fallT += dt;
         const ft = g.current.fallT;
         const jumpDur = 0.25;
@@ -685,7 +687,7 @@ export default function App() {
       }
 
       // gondoliere: cammina solo in "walking"; braccia alzate durante la caduta
-      const walkingNow = phase === "walking";
+      const walkingNow = phase === "walking" && !paused;
       const falling = (phase === "falling" || phase === "gameover") && heroVisible;
       if (falling) {
         drawGondolierFalling(p, 226 + fallOffset, now);
@@ -707,7 +709,7 @@ export default function App() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [phase]);
+  }, [phase, paused]);
 
   const currentEnc = encAt(encIdx);
   const showMessage =
@@ -754,15 +756,61 @@ export default function App() {
           </div>
         )}
 
-        {/* HUD */}
+        {/* HUD: pausa a sinistra, punti a destra */}
         {(phase === "walking" || phase === "stopped") && (
-          <div className="absolute top-2 left-2 right-2 flex justify-between text-[11px] font-bold">
+          <div className="absolute top-2 left-2 right-2 flex justify-between items-center text-[11px] font-bold">
+            <button
+              onClick={() => setPaused(true)}
+              className="flex items-center gap-1 bg-black/50 hover:bg-black/70 text-white/90 px-2.5 py-1.5"
+              style={{ fontFamily: "monospace", borderRadius: 4 }}
+              aria-label="pausa"
+            >
+              <span className="inline-block w-[3px] h-3 bg-current" />
+              <span className="inline-block w-[3px] h-3 bg-current" />
+            </button>
             {mode === "esplora" ? (
               <span className="bg-black/50 text-[#9fd4f0] px-2 py-1" style={{ fontFamily: "monospace" }}>ESPLORA</span>
             ) : (
               <span className="bg-black/50 text-[#ffd22c] px-2 py-1" style={{ fontFamily: "monospace" }}>PUNTI {score}</span>
             )}
-            <span className="bg-black/50 text-white/80 px-2 py-1" style={{ fontFamily: "monospace" }}>INCONTRI {encIdx + 1}</span>
+          </div>
+        )}
+
+        {/* MENU DI PAUSA */}
+        {paused && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60" style={{ borderRadius: 8 }}>
+            <div className="text-[#ffd22c] text-2xl font-black tracking-[0.25em]" style={{ fontFamily: "monospace" }}>
+              PAUSA
+            </div>
+            <button
+              onClick={() => setPaused(false)}
+              className="px-6 py-2 bg-[#3d7a4f] text-white text-sm font-bold tracking-wider hover:bg-[#4d9a63]"
+              style={{ fontFamily: "monospace", border: "2px solid #ffd22c" }}
+            >
+              TORNA AL ZOGO
+            </button>
+            <button
+              onClick={() => {
+                resetWorld();
+                setPaused(false);
+                setPhase("walking");
+              }}
+              className="px-6 py-2 bg-[#c0392b] text-white text-sm font-bold tracking-wider hover:bg-[#e74c3c]"
+              style={{ fontFamily: "monospace", border: "2px solid #ffd22c" }}
+            >
+              SCOMENZA DA CAO
+            </button>
+            <button
+              onClick={() => {
+                resetWorld();
+                setPaused(false);
+                setPhase("title");
+              }}
+              className="px-6 py-2 bg-[#3a3226] text-white/90 text-sm font-bold tracking-wider hover:bg-[#52483a]"
+              style={{ fontFamily: "monospace", border: "2px solid #ffd22c" }}
+            >
+              TORNA AL MENÙ
+            </button>
           </div>
         )}
 
